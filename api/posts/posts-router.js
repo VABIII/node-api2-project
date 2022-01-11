@@ -36,13 +36,13 @@ router.get('/:id', async (req, res) => {
     }
 })
 
-router.post('/', async (req, res) => {
-    const {title, contents} = req.body
+router.post('/',async (req, res) => {
+    const { title, contents } = req.body
     try {
-        const newPost = Posts.insert(req.body)
+        const newPost = await Posts.insert({title, contents})
         if(!title || !contents) {
             res.status(400).json({
-                message: 'Please provide title and contents for the post'
+                message: "Please provide title and contents for the post"
             })
         } else {
             res.status(201).json(newPost)
@@ -56,12 +56,13 @@ router.post('/', async (req, res) => {
     }
 })
 
+
 router.put('/:id', async (req,res) => {
     const { id } = req.params
     const {title, contents} = req.body
 
     try {
-        const updatedPost = await Posts.update(id, req.body)
+        const updatedPost = await Posts.update(id, {title, contents})
         if(!updatedPost) {
             res.status(404).json({
                 message: "The post with the specified ID does not exist"
@@ -83,39 +84,46 @@ router.put('/:id', async (req,res) => {
 })
 
 router.delete('/:id', async (req, res) => {
-    // const { id } = req.params
-    // try {
-    //     const deletedPost = await Posts.remove(id)
-    //     res.json(deletedPost)
-    //
-    //
-    // }
-    // catch (err) {
-    //     res.status(500).json({
-    //         message: 'The post could not be removed'
-    //     })
-    // }
-    Posts.remove(req.params.id)
-        .then(count => {
-            if (count > 0) {
-                res.status(200).json({ message: 'The adopter has been nuked' })
-            } else {
-                res.status(404).json({ message: 'The adopter could not be found' })
-            }
-        })
-        .catch(error => {
-            console.log(error)
-            res.status(500).json({
-                message: 'Error removing the adopter',
+    const { id } = req.params
+
+    try {
+        const deletedPost = await Posts.remove(id)
+        if(!deletedPost) {
+            res.status(404).json({
+                message: 'The post with the specified ID does not exists'
             })
+        } else {
+            res.json(deletedPost)
+        }
+    }
+    catch (err) {
+        res.status(500).json({
+            message:"The post could not be removed"
         })
+    }
+
+
+    // Posts.remove(req.params.id)
+    //     .then(count => {
+    //         if (count > 0) {
+    //             res.status(200).json({ message: 'The adopter has been nuked' })
+    //         } else {
+    //             res.status(404).json({ message: 'The adopter could not be found' })
+    //         }
+    //     })
+    //     .catch(error => {
+    //         console.log(error)
+    //         res.status(500).json({
+    //             message: 'Error removing the adopter',
+    //         })
+    //     })
 })
 
 router.get('/:id/comments', async (req, res) => {
     const { id } = req.params
 
     try {
-        const comments = await Posts.findCommentById(id)
+        const comments = await Posts.findPostComments(id)
         if(!comments){
             res.status(404).json({
                 message: "The post with the specified ID does not exist"
