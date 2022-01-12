@@ -38,14 +38,16 @@ router.get('/:id', async (req, res) => {
 
 router.post('/',async (req, res) => {
     const { title, contents } = req.body
+
     try {
-        const newPost = await Posts.insert({title, contents})
         if(!title || !contents) {
             res.status(400).json({
                 message: "Please provide title and contents for the post"
             })
         } else {
-            res.status(201).json(newPost)
+            const newPost = await Posts.insert(req.body)
+            const returnedPost = await Posts.findById(newPost.id)
+            res.status(201).json(returnedPost)
         }
     }
     catch (err) {
@@ -62,17 +64,19 @@ router.put('/:id', async (req,res) => {
     const {title, contents} = req.body
 
     try {
-        const updatedPost = await Posts.update(id, {title, contents})
-        if(!updatedPost) {
+        let dbPost = await Posts.findById(id)
+        if( id === undefined || !dbPost) {
             res.status(404).json({
                 message: "The post with the specified ID does not exist"
             })
-        } else if (!title || !contents) {
+        } else if (title === undefined || contents === undefined) {
             res.status(400).json({
-                message: "Please provide title and contents or the post"
+                message:"Please provide title and contents for the post"
             })
         } else {
-            res.status(200).json(updatedPost)
+            await Posts.update(id, req.body)
+            let dbPost = await Posts.findById(id)
+            res.json(dbPost)
         }
     }
     catch (err) {
@@ -85,15 +89,16 @@ router.put('/:id', async (req,res) => {
 
 router.delete('/:id', async (req, res) => {
     const { id } = req.params
+    const dbPost = await Posts.findById(id)
 
     try {
-        const deletedPost = await Posts.remove(id)
-        if(!deletedPost) {
+        if (!dbPost) {
             res.status(404).json({
-                message: 'The post with the specified ID does not exists'
+                message: 'The post with the specified ID does not exist'
             })
         } else {
-            res.json(deletedPost)
+          res.json(dbPost)
+          await Posts.remove(id)
         }
     }
     catch (err) {
